@@ -1,8 +1,8 @@
+using MLAPI;
 using Steamworks;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using MLAPI;
 
 public class ServersList : MonoBehaviour
 {
@@ -15,10 +15,11 @@ public class ServersList : MonoBehaviour
     protected Callback<LobbyChatUpdate_t> Callback_lobbyChatUpdate;
 
     private NetworkManager networkManager;
+    private const string HostAddressKey = "HostAddress";
 
     ulong current_lobbyID;
     List<CSteamID> lobbyIDS;
-    string personaName = SteamFriends.GetPersonaName();
+    string personaName;
 
     [Header("Instantiate lobbies")]
     [SerializeField] private Transform content;
@@ -50,9 +51,14 @@ public class ServersList : MonoBehaviour
         networkManager = FindObjectOfType<NetworkManager>();
 
         if (SteamAPI.Init())
+        {
             Debug.Log("Steam API init -- SUCCESS!");
+            personaName = SteamFriends.GetPersonaName();
+        }
         else
+        {
             Debug.Log("Steam API init -- failure ...");
+        }
     }
     void Update()
     {
@@ -160,11 +166,13 @@ public class ServersList : MonoBehaviour
             Debug.Log("\t Player(" + i + ") == " + SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)));
         }
 
-        //if (!networkManager.IsHost)
-       //{
+        if (networkManager.IsHost) { return; }
 
-       //     networkManager.StartClient();
-      //  }
+        string hostAddress = SteamMatchmaking.GetLobbyData(new CSteamID(result.m_ulSteamIDLobby), HostAddressKey);
+
+        networkManager.StartClient();
+
+
     }
     private void OnLobbyCreated(LobbyCreated_t pCallback)
     {
@@ -224,11 +232,11 @@ public class ServersList : MonoBehaviour
         Debug.Log("SteamMatchmaking.GetLobbyChatEntry(" + (CSteamID)pCallback.m_ulSteamIDLobby + ", " + (int)pCallback.m_iChatID + ", out SteamIDUser, Data, Data.Length, out ChatEntryType) : " + ret + " -- " + SteamIDUser + " -- " + System.Text.Encoding.UTF8.GetString(Data) + " -- " + ChatEntryType);
 
         //if (SteamIDUser.ToString() != SteamUser.GetSteamID().ToString())
-       // {
+        // {
         chatText.text = "";
         string data = System.Text.Encoding.Default.GetString(Data);
         chatText.text += personaName + ": " + data + '\n';
-      //  }
+        //  }
     }
     public void LeaveLobbyButton()
     {
@@ -238,6 +246,14 @@ public class ServersList : MonoBehaviour
         connectingText.text = "Leaving!";
 
         SteamMatchmaking.LeaveLobby((CSteamID)current_lobbyID);
+        if (networkManager.IsHost)
+        {
+            networkManager.StopHost();
+        }
+        else
+        {
+            networkManager.StopClient();
+        }
 
         current_lobbyID = 0;
         Debug.Log("You are in menu!");

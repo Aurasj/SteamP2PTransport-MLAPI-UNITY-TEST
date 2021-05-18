@@ -133,15 +133,15 @@ PrefabInstance:
     - target: {fileID: 688920002225230018, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1984622095}
+      objectReference: {fileID: 0}
     - target: {fileID: 688920002593005260, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1984622095}
+      objectReference: {fileID: 0}
     - target: {fileID: 688920002804278621, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Target
       value: 
-      objectReference: {fileID: 1984622095}
+      objectReference: {fileID: 0}
     - target: {fileID: 688920003533217366, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_Name
       value: Canvas
@@ -233,11 +233,11 @@ PrefabInstance:
     - target: {fileID: 688920003829501366, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Target
       value: 
-      objectReference: {fileID: 1984622095}
+      objectReference: {fileID: 0}
     - target: {fileID: 688920004033615941, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1984622095}
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 78137eff58c7d4c45be5309b95df1430, type: 3}
 --- !u!224 &236820392 stripped
@@ -726,7 +726,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b81d70b2c3b41142a37e631239ef533, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConnectToSteamID: 0
+  ConnectToSteamID: 480
 --- !u!114 &1484608444
 MonoBehaviour:
   m_ObjectHideFlags: 0
