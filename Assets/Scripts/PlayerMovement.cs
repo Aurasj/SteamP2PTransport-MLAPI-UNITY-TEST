@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerMovement : NetworkBehaviour
 {
     public Transform Camera;
+    private GameObject mainCamera;
 
     public float movementSpeed;
 
@@ -14,11 +15,15 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Start()
     {
+        mainCamera = GameObject.FindGameObjectWithTag("Camera");
         if (!IsLocalPlayer)
         {
             Camera.GetComponent<AudioListener>().enabled = false;
             Camera.GetComponent<Camera>().enabled = false;
         }
+        mainCamera.GetComponent<AudioListener>().enabled = false;
+        mainCamera.GetComponent<Camera>().enabled = false;
+
     }
     private void Update()
     {

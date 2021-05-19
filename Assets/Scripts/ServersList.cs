@@ -1,9 +1,9 @@
 using MLAPI;
+using MLAPI.Transports.SteamP2P;
 using Steamworks;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-
 public class ServersList : MonoBehaviour
 {
     protected Callback<GameOverlayActivated_t> Callback_gameOverlay;
@@ -15,7 +15,7 @@ public class ServersList : MonoBehaviour
     protected Callback<LobbyChatUpdate_t> Callback_lobbyChatUpdate;
 
     private NetworkManager networkManager;
-    private const string HostAddressKey = "HostAddress";
+    private SteamP2PTransport steamP2P;
 
     ulong current_lobbyID;
     List<CSteamID> lobbyIDS;
@@ -49,6 +49,7 @@ public class ServersList : MonoBehaviour
         Callback_lobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
 
         networkManager = FindObjectOfType<NetworkManager>();
+        steamP2P = FindObjectOfType<SteamP2PTransport>();
 
         if (SteamAPI.Init())
         {
@@ -167,11 +168,10 @@ public class ServersList : MonoBehaviour
         }
 
         if (networkManager.IsHost) { return; }
-
-        string hostAddress = SteamMatchmaking.GetLobbyData(new CSteamID(result.m_ulSteamIDLobby), HostAddressKey);
+        steamP2P.ConnectToSteamID = (ulong)SteamMatchmaking.GetLobbyOwner((CSteamID)current_lobbyID);
+        Debug.Log("New Steam Id Owner: " + steamP2P.ConnectToSteamID);
 
         networkManager.StartClient();
-
 
     }
     private void OnLobbyCreated(LobbyCreated_t pCallback)
@@ -249,8 +249,9 @@ public class ServersList : MonoBehaviour
         if (networkManager.IsHost)
         {
             networkManager.StopHost();
+            networkManager.StopServer();
         }
-        else
+        else if (networkManager.IsClient)
         {
             networkManager.StopClient();
         }
