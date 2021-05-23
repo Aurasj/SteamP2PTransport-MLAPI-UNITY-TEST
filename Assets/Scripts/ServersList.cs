@@ -4,6 +4,7 @@ using Steamworks;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 public class ServersList : MonoBehaviour
 {
     protected Callback<GameOverlayActivated_t> Callback_gameOverlay;
@@ -13,9 +14,11 @@ public class ServersList : MonoBehaviour
     protected Callback<LobbyCreated_t> Callback_LobbyCreate;
     protected Callback<LobbyChatMsg_t> Callback_lobbyChatMsg;
     protected Callback<LobbyChatUpdate_t> Callback_lobbyChatUpdate;
+    protected Callback<AvatarImageLoaded_t> Callback_avatarImageLoaded;
 
     private NetworkManager networkManager;
     private SteamP2PTransport steamP2P;
+    //private ISteamMatchmakingPingResponse pingResponse;
 
     ulong current_lobbyID;
     List<CSteamID> lobbyIDS;
@@ -25,6 +28,10 @@ public class ServersList : MonoBehaviour
     [SerializeField] private Transform content;
     [SerializeField] private RoomListing roomListing;
 
+    [Header("Instantiate Players Lobby Info")]
+    [SerializeField] private Transform contentPlayers;
+    [SerializeField] private PlayerLobbyListing playerLobbyListing;
+
     [Header("Menu Changes")]
     [SerializeField] private GameObject menu;
     [SerializeField] private GameObject serverList;
@@ -33,6 +40,7 @@ public class ServersList : MonoBehaviour
 
     [Space]
     [SerializeField] private TMP_Text lobbiesNr;
+    [SerializeField] private TMP_Text pingText;
     [SerializeField] private TMP_Text connectingText;
     [SerializeField] private TMP_Text chatText;
     [SerializeField] private TMP_InputField chatBox;
@@ -47,6 +55,8 @@ public class ServersList : MonoBehaviour
         Callback_LobbyCreate = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
         Callback_lobbyChatMsg = Callback<LobbyChatMsg_t>.Create(OnLobbyChatMsg);
         Callback_lobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
+        Callback_avatarImageLoaded = Callback<AvatarImageLoaded_t>.Create(OnAvatarImageLoaded);
+        //pingResponse = new ISteamMatchmakingPingResponse(OnServerResponded, OnServerFailedToRespond);
 
         networkManager = FindObjectOfType<NetworkManager>();
         steamP2P = FindObjectOfType<SteamP2PTransport>();
@@ -83,13 +93,15 @@ public class ServersList : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            int numPlayers = SteamMatchmaking.GetNumLobbyMembers((CSteamID)current_lobbyID);
-
-            Debug.Log("\t Number of players currently in lobby : " + numPlayers);
-            for (int i = 0; i < numPlayers; i++)
+            foreach (Transform child in contentPlayers)
             {
-                Debug.Log("\t Player(" + i + ") == " + SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)));
+                Destroy(child.gameObject);
             }
+            Debug.Log("Destroyed all players Info");
+
+            CheckPlayersLobby();
+
+            Debug.Log("Show up players info");
         }
     }
     private void OnGameOverlayActivated(GameOverlayActivated_t pCallback)
@@ -151,7 +163,7 @@ public class ServersList : MonoBehaviour
             {
                 serverList.SetActive(false);
             }
-            inLobby.SetActive(true);
+            //inLobby.SetActive(true);
         }
         else
         {
@@ -159,13 +171,7 @@ public class ServersList : MonoBehaviour
             connectingText.text = "Failed to connect!";
         }
 
-        int numPlayers = SteamMatchmaking.GetNumLobbyMembers((CSteamID)current_lobbyID);
-
-        Debug.Log("\t Number of players currently in lobby : " + numPlayers);
-        for (int i = 0; i < numPlayers; i++)
-        {
-            Debug.Log("\t Player(" + i + ") == " + SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)));
-        }
+        CheckPlayersLobby();
 
         if (networkManager.IsHost) { return; }
         steamP2P.ConnectToSteamID = (ulong)SteamMatchmaking.GetLobbyOwner((CSteamID)current_lobbyID);
@@ -187,12 +193,9 @@ public class ServersList : MonoBehaviour
         }
         networkManager.StartHost();
 
-
         string personalName = SteamFriends.GetPersonaName();
         SteamMatchmaking.SetLobbyData((CSteamID)pCallback.m_ulSteamIDLobby, "name", personalName + " adica boss de boss");
-
     }
-
     public void LobbyEnter(int lobbyNr)
     {
         connectingLobby.SetActive(true);
@@ -207,6 +210,10 @@ public class ServersList : MonoBehaviour
         connectingText.text = "Trying to create lobby ...";
         Debug.Log("Trying to create lobby ...");
         SteamAPICall_t try_toHost = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, 8);
+    }
+    public void StartGame()
+    {
+        SceneManager.LoadScene("GameScene");
     }
     public void SubmitChatText(string text)
     {
@@ -240,7 +247,7 @@ public class ServersList : MonoBehaviour
     }
     public void LeaveLobbyButton()
     {
-        inLobby.SetActive(false);
+        //inLobby.SetActive(false);
 
         Debug.Log("Leaving Lobby!");
         connectingText.text = "Leaving!";
@@ -261,6 +268,12 @@ public class ServersList : MonoBehaviour
         menu.SetActive(true);
         connectingLobby.SetActive(false);
 
+        foreach (Transform child in contentPlayers)
+        {
+            Destroy(child.gameObject);
+        }
+        Debug.Log("Destroyed all players Info");
+
         //Chat
         chatBox.text = "";
         chatText.text = "";
@@ -275,6 +288,51 @@ public class ServersList : MonoBehaviour
             Destroy(child.gameObject);
         }
     }
+    private void CheckPlayersLobby()
+    {
+        int numPlayers = SteamMatchmaking.GetNumLobbyMembers((CSteamID)current_lobbyID);
+
+        Debug.Log("\t Number of players currently in lobby : " + numPlayers);
+        for (int i = 0; i < numPlayers; i++)
+        {
+            int imageId = SteamFriends.GetLargeFriendAvatar((SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)));
+
+            Debug.Log("\t Player(" + i + ") == " + SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)));
+
+            Instantiate(playerLobbyListing, contentPlayers);
+
+            playerLobbyListing.playerImage.texture = GetSteamImage(imageId);
+            playerLobbyListing.playerName.text = SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)).ToString();
+            playerLobbyListing.playerNrinLobby.text = (i + 1).ToString();
+        }
+    }
+    private void OnAvatarImageLoaded(AvatarImageLoaded_t callback)
+    {
+        if (callback.m_steamID.m_SteamID != current_lobbyID) { return; }
+
+        playerLobbyListing.playerImage.texture = GetSteamImage(callback.m_iImage);
+    }
+    private Texture2D GetSteamImage(int iImage)
+    {
+        Texture2D texture = null;
+
+        bool isValid = SteamUtils.GetImageSize(iImage, out uint width, out uint height);
+
+        if (isValid)
+        {
+            byte[] image = new byte[width * height * 4];
+
+            isValid = SteamUtils.GetImageRGBA(iImage, image, (int)(width * height * 4));
+
+            if (isValid)
+            {
+                texture = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false, true);
+                texture.LoadRawTextureData(image);
+                texture.Apply();
+            }
+        }
+        return texture;
+    }
     public void DestroyLobbiesButton()
     {
         foreach (Transform child in content)
@@ -283,5 +341,19 @@ public class ServersList : MonoBehaviour
         }
         Debug.Log("Destroyed all lobbies");
     }
-
+    //Request Latency
+    /*
+    private void OnServerResponded(gameserveritem_t gsi)
+    {
+        Debug.Log("OnServerResponded" + gsi);
+    }
+    private void OnServerFailedToRespond()
+    {
+        Debug.Log("OnServerFailedToRespond");
+    }
+    private void GetLatency()
+    {
+      // if(IsLocalPlayer)
+        pingText.text = SteamMatchmakingServers.PingServer((uint)current_lobbyID, (ushort)current_lobbyID, pingResponse).ToString();
+    }*/
 }
