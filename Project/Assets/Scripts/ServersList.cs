@@ -18,7 +18,8 @@ public class ServersList : MonoBehaviour
 
     private NetworkManager networkManager;
     private SteamP2PTransport steamP2P;
-    //private ISteamMatchmakingPingResponse pingResponse;
+    private PlayerMovement playerMovement;
+    private ISteamMatchmakingPingResponse pingResponse;
 
     ulong current_lobbyID;
     List<CSteamID> lobbyIDS;
@@ -36,7 +37,7 @@ public class ServersList : MonoBehaviour
     [SerializeField] private GameObject menu;
     [SerializeField] private GameObject serverList;
     [SerializeField] private GameObject connectingLobby;
-    [SerializeField] private GameObject inLobby;
+    [SerializeField] public GameObject inLobby;
 
     [Space]
     [SerializeField] private TMP_Text lobbiesNr;
@@ -56,10 +57,11 @@ public class ServersList : MonoBehaviour
         Callback_lobbyChatMsg = Callback<LobbyChatMsg_t>.Create(OnLobbyChatMsg);
         Callback_lobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
         Callback_avatarImageLoaded = Callback<AvatarImageLoaded_t>.Create(OnAvatarImageLoaded);
-        //pingResponse = new ISteamMatchmakingPingResponse(OnServerResponded, OnServerFailedToRespond);
+        pingResponse = new ISteamMatchmakingPingResponse(OnServerResponded, OnServerFailedToRespond);
 
         networkManager = FindObjectOfType<NetworkManager>();
         steamP2P = FindObjectOfType<SteamP2PTransport>();
+        playerMovement = FindObjectOfType<PlayerMovement>();
 
         if (SteamAPI.Init())
         {
@@ -93,16 +95,9 @@ public class ServersList : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            foreach (Transform child in contentPlayers)
-            {
-                Destroy(child.gameObject);
-            }
-            Debug.Log("Destroyed all players Info");
-
             CheckPlayersLobby();
-
-            Debug.Log("Show up players info");
         }
+        GetLatency();
     }
     private void OnGameOverlayActivated(GameOverlayActivated_t pCallback)
     {
@@ -121,9 +116,9 @@ public class ServersList : MonoBehaviour
         for (int i = 0; i < result.m_nLobbiesMatching; i++)
         {
             CSteamID lobbyID = SteamMatchmaking.GetLobbyByIndex(i);
-            Instantiate(roomListing, content);
             lobbyIDS.Add(lobbyID);
             SteamMatchmaking.RequestLobbyData(lobbyID);
+            Instantiate(roomListing, content);
 
             //+++++++++++++++++++++++++++++
 
@@ -163,7 +158,6 @@ public class ServersList : MonoBehaviour
             {
                 serverList.SetActive(false);
             }
-            //inLobby.SetActive(true);
         }
         else
         {
@@ -171,6 +165,7 @@ public class ServersList : MonoBehaviour
             connectingText.text = "Failed to connect!";
         }
 
+        inLobby.SetActive(true);
         CheckPlayersLobby();
 
         if (networkManager.IsHost) { return; }
@@ -191,6 +186,7 @@ public class ServersList : MonoBehaviour
             Debug.Log("Lobby created -- failure ...");
 
         }
+        CheckPlayersLobby();
         networkManager.StartHost();
 
         string personalName = SteamFriends.GetPersonaName();
@@ -213,7 +209,10 @@ public class ServersList : MonoBehaviour
     }
     public void StartGame()
     {
-        SceneManager.LoadScene("GameScene");
+        if (networkManager.IsHost)
+        {
+            SceneManager.LoadScene("GameScene");
+        }
     }
     public void SubmitChatText(string text)
     {
@@ -226,11 +225,11 @@ public class ServersList : MonoBehaviour
     void OnLobbyChatUpdate(LobbyChatUpdate_t pCallback)
     {
         Debug.Log("[" + LobbyChatUpdate_t.k_iCallback + " - LobbyChatUpdate] - " + pCallback.m_ulSteamIDLobby + " -- " + pCallback.m_ulSteamIDUserChanged + " -- " + pCallback.m_ulSteamIDMakingChange + " -- " + pCallback.m_rgfChatMemberStateChange);
+        CheckPlayersLobby();
     }
     void OnLobbyChatMsg(LobbyChatMsg_t pCallback)
     {
         Debug.Log("[" + LobbyChatMsg_t.k_iCallback + " - LobbyChatMsg] - " + pCallback.m_ulSteamIDLobby + " -- " + pCallback.m_ulSteamIDUser + " -- " + pCallback.m_eChatEntryType + " -- " + pCallback.m_iChatID);
-
         CSteamID SteamIDUser;
         byte[] Data = new byte[4096];
         EChatEntryType ChatEntryType;
@@ -267,6 +266,10 @@ public class ServersList : MonoBehaviour
         Debug.Log("You are in menu!");
         menu.SetActive(true);
         connectingLobby.SetActive(false);
+        if (inLobby == true)
+        {
+            inLobby.SetActive(false);
+        }
 
         foreach (Transform child in contentPlayers)
         {
@@ -290,6 +293,12 @@ public class ServersList : MonoBehaviour
     }
     private void CheckPlayersLobby()
     {
+        foreach (Transform child in contentPlayers)
+        {
+            Destroy(child.gameObject);
+        }
+        Debug.Log("Destroyed all players Info");
+
         int numPlayers = SteamMatchmaking.GetNumLobbyMembers((CSteamID)current_lobbyID);
 
         Debug.Log("\t Number of players currently in lobby : " + numPlayers);
@@ -305,6 +314,7 @@ public class ServersList : MonoBehaviour
             playerLobbyListing.playerName.text = SteamFriends.GetFriendPersonaName(SteamMatchmaking.GetLobbyMemberByIndex((CSteamID)current_lobbyID, i)).ToString();
             playerLobbyListing.playerNrinLobby.text = (i + 1).ToString();
         }
+        Debug.Log("Show up players info");
     }
     private void OnAvatarImageLoaded(AvatarImageLoaded_t callback)
     {
@@ -342,7 +352,7 @@ public class ServersList : MonoBehaviour
         Debug.Log("Destroyed all lobbies");
     }
     //Request Latency
-    /*
+
     private void OnServerResponded(gameserveritem_t gsi)
     {
         Debug.Log("OnServerResponded" + gsi);
@@ -353,7 +363,7 @@ public class ServersList : MonoBehaviour
     }
     private void GetLatency()
     {
-      // if(IsLocalPlayer)
+        //if(IsLocalPlayer)
         pingText.text = SteamMatchmakingServers.PingServer((uint)current_lobbyID, (ushort)current_lobbyID, pingResponse).ToString();
-    }*/
+    }
 }

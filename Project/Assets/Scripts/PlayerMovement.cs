@@ -11,8 +11,6 @@ public class PlayerMovement : NetworkBehaviour
     public float rotationSpeed;
     float rotX;
     float rotY;
-
-
     private void Start()
     {
         mainCamera = GameObject.FindGameObjectWithTag("Camera");
@@ -21,9 +19,7 @@ public class PlayerMovement : NetworkBehaviour
             Camera.GetComponent<AudioListener>().enabled = false;
             Camera.GetComponent<Camera>().enabled = false;
         }
-        mainCamera.GetComponent<AudioListener>().enabled = false;
-        mainCamera.GetComponent<Camera>().enabled = false;
-
+        MainCamera();
     }
     private void Update()
     {
@@ -32,6 +28,11 @@ public class PlayerMovement : NetworkBehaviour
             Movement();
             Rotation();
         }
+    }
+    public void MainCamera()
+    {
+        mainCamera.GetComponent<AudioListener>().enabled = false;
+        mainCamera.GetComponent<Camera>().enabled = false;
     }
 
     private void Movement()
