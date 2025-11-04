@@ -24,7 +24,6 @@ Note: MLAPI has since been succeeded by Unity’s “Netcode for GameObjects” 
 1. Clone the repository:  
 ```bash
    git clone https://github.com//Aurasj/SteamP2PTransport-MLAPI-UNITY-TEST
-   open with Unity
 ```
 2.Open the project in Unity (version compatible with the MLAPI version used).
 
