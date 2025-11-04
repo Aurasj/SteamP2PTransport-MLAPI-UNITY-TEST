@@ -8,7 +8,6 @@ A test project using Steam P2P Transport with MLAPI (the older Unity Netcode lib
 
 This repository demonstrates a simple implementation of Steam’s peer‑to‑peer transport layer (via the original MLAPI) for Unity multiplayer.  
 Note: MLAPI has since been succeeded by Unity’s “Netcode for GameObjects” and the SteamP2P transport may require updates for newer versions of Unity.  
-:contentReference[oaicite:2]{index=2}
 
 ---
 
